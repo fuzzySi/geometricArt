@@ -1,0 +1,114 @@
+// 07 processing
+
+// this draws a polygon of n sides. 
+// it has maxN spokes so you can interpolate each spoke to morph between diffent numbers of sides 
+// but maxN needs to be product of n, else you won't get corners. 
+
+// maxN should be a product of 1 * 2 * 3 * 5 * 7 * 11 * 13 & all primes up to maxSides, so we have points for each vertex
+
+// but it might not be on a spoke, if maxN not divisible by n
+
+int maxN = 23;
+int n = 5;
+int gap = maxN / n;
+int remainder = maxN % n;
+int lasti; // used to finish drawing
+int currentSpoke = 1;
+
+float theta = TWO_PI / n;
+float thetaMaxN = TWO_PI / maxN;
+
+PVector[] v; // maxN spokes from origin
+PVector[] spoke;
+PVector overlap; // working PV to tell if spokes too long
+
+
+PVector origin;
+int radius = 280;
+int originX, originY;
+float sideLength;
+
+void setup() {
+  size (800, 600);
+  background(0);
+  stroke(255);
+  println(gap);
+  println(remainder);
+  originX = width / 2;
+  originY = height / 2;
+  origin = new PVector(0, 0);
+  spoke = new PVector[n+1];
+  v = new PVector[maxN];
+
+  for (int i = 0; i < n; i ++) { // set up n spokes
+    spoke[i] = PVector.fromAngle(theta * i); 
+    spoke[i].setMag(radius);
+    // println("spoke " + i + " is " + (degrees(theta * i)) + " PV: " + spoke[i]);
+  }
+  spoke[n] = spoke[0]; // to loop around
+
+
+  for (int i = 0; i < maxN; i ++) { // set up maxN non used spokes
+    v[i] = PVector.fromAngle(thetaMaxN * i); 
+    v[i].setMag(radius);
+    // println("i is " + i + " is " + (degrees(thetaMaxN * i)));
+    if ((i * thetaMaxN) > (currentSpoke * theta)) { // if current angle past current spoke, next w vector instead 
+      currentSpoke ++;
+    //  println("currentSpoke is " + currentSpoke);
+    }
+    overlap = lineIntersection(spoke[currentSpoke], spoke[currentSpoke-1], origin, v[i]);
+    if (overlap !=null) { 
+      float distance = dist(overlap.x, overlap.y, 0, 0);
+      v[i].setMag(distance);
+    }
+  }
+} // end setup
+
+void draw() {
+  pushMatrix();
+  translate(originX, originY);
+
+  stroke(100);
+  stroke(255);
+
+  for (int i = 1; i < n; i ++) { // draw n-1 sides
+    line(spoke[i].x, spoke[i].y, spoke[i-1].x, spoke[i-1].y);
+    lasti = i;
+  }
+  line(spoke[lasti].x, spoke[lasti].y, spoke[0].x, spoke[0].y); // draw last side
+
+  for (int i = 0; i < maxN; i ++) { // draw spokes 
+    stroke(100);
+    line(0, 0, v[i].x, v[i].y); 
+  }
+  stroke(255);
+//  line(v[0].x, v[0].y, v[lastTrueSpoke].x, v[lastTrueSpoke].y);
+
+  popMatrix();
+  noLoop();
+}
+
+
+
+PVector lineIntersection(PVector p1, PVector p2, PVector p3, PVector p4) {
+  PVector b = PVector.sub(p2, p1);
+  PVector d = PVector.sub(p4, p3);
+
+  float b_dot_d_perp = b.x * d.y - b.y * d.x;
+  if (b_dot_d_perp == 0) { 
+    println("1st overlap error");
+    return null;
+  }
+  PVector c = PVector.sub(p3, p1);
+  float t = (c.x * d.y - c.y * d.x) / b_dot_d_perp;
+  if (t < 0 || t > 1) { 
+    println("2nd overlap error");
+    return null;
+  }
+  float u = (c.x * b.y - c.y * b.x) / b_dot_d_perp;
+  if (u < 0 || u > 1) { 
+    println(u + "<-u 3rd overlap error");
+    return null;
+  }
+  return new PVector(p1.x+t*b.x, p1.y+t*b.y);
+}
