@@ -1,0 +1,174 @@
+// this sets up 2 polygon of differnt number of sides. 
+// it interpolates each spoke to morph between diffent numbers of sides 
+// but spokes needs to be product of n, else you won't get corners. 
+
+// spokes should be a product of 1 * 2 * 3 * 5 * 7 * 11 * 13 & all primes up to maxSides, so we have points for each vertex
+
+// but it might not be on a spoke, if spokes not divisible by n
+
+
+PolygonN shapeone, shapetwo;
+int maxSides = 8;
+float steps = 20.0;
+float amt = 0;
+
+int n; // = (int)random(12) + 3;
+int maxN; // = n * 3;
+int n2;
+// int maxN2;
+
+boolean drawSpokes = false;
+
+PVector origin;
+// PVector[] morph;
+int radius = 280;
+int originX, originY;
+
+
+
+void setup() {
+  size (800, 600);
+ background(0);
+  stroke(255);
+
+  originX = width / 2;
+  originY = height / 2;
+
+  n = (int)random(maxSides) + 3;
+  n2 = (int)random(maxSides) + 3;
+  if (n == n2) {
+    n2 = n + 1;
+  }
+  maxN = n * n2 * 10;
+
+  shapeone = new PolygonN(n, maxN, radius);
+  shapetwo = new PolygonN(n2, maxN, radius);
+
+  shapeone.setupPolygon();
+  shapetwo.setupPolygon();
+} // end setup
+
+void draw() {
+  // background(0);
+  pushMatrix();
+  translate(originX, originY);
+  stroke(255);
+
+  PVector[] morph = new PVector[maxN];
+
+  noFill();
+  beginShape();
+  for (int i = 0; i < maxN; i ++) {
+    // println(shape1.v[i]);
+    morph[i] = PVector.lerp(shapeone.v[i], shapetwo.v[i], amt);
+    vertex(morph[i].x, morph[i].y);
+  }
+  endShape(CLOSE);
+  amt += (1 / steps);
+  if ((amt > 1.0) || (amt < 0)) {
+    // amt = 1.0;
+    steps = - steps;
+  }
+
+  //  shape1.drawPolygon();
+  //  shape2.drawPolygon();
+
+  popMatrix();
+  println("to here");
+  delay(50);
+
+  // noLoop();
+} // end draw
+
+
+class PolygonN {
+  int sides;
+  int spokes;
+  int radius;
+  PVector[] v; // all spokes from origin
+  PVector[] spoke; // spokes to each corner ie used spokes
+  PVector origin = new PVector(0, 0);
+
+  PolygonN(int n, int m, int r) {
+    sides = n;
+    spokes = m;
+    radius = r;
+  }
+
+
+
+  void setupPolygon() {
+
+    float theta = TWO_PI / sides; // angle between sides
+    float thetaSpokes = TWO_PI / spokes; // angle between spokes
+    int currentSpoke = 1;
+    PVector overlap; // working vector to tell if spokes too long
+
+    spoke = new PVector[sides+1];
+    v = new PVector[spokes];
+
+    for (int i = 0; i < sides; i ++) { // set up n used spokes
+      spoke[i] = PVector.fromAngle(theta * i); 
+      spoke[i].setMag(radius);
+    }
+    spoke[sides] = spoke[0]; // to loop around
+
+    for (int i = 0; i < spokes; i ++) { // set up spokes non used spokes
+      v[i] = PVector.fromAngle(thetaSpokes * i); 
+      v[i].setMag(radius); // ful length so overlaps side
+      // println("i is " + i + " is " + (degrees(thetaSpokes * i)));
+      if ((i * thetaSpokes) > (currentSpoke * theta)) { // if current angle past current used spoke, move on to next spoke 
+        currentSpoke ++;
+      }
+      overlap = lineIntersection(spoke[currentSpoke], spoke[currentSpoke-1], origin, v[i]);
+      if (overlap !=null) { 
+        float distance = dist(overlap.x, overlap.y, 0, 0);
+        v[i].setMag(distance);
+      }
+    }
+  }
+
+  void drawPolygon() {
+    int lasti = 0; // used to finish drawing
+
+    for (int i = 1; i < sides; i ++) { // draw n-1 sides
+      line(spoke[i].x, spoke[i].y, spoke[i-1].x, spoke[i-1].y);
+      lasti = i;
+    }
+    line(spoke[lasti].x, spoke[lasti].y, spoke[0].x, spoke[0].y); // draw last side
+
+    if (drawSpokes) {
+      for (int i = 0; i < spokes; i ++) { 
+        stroke(100);
+        line(0, 0, v[i].x, v[i].y); // draw spokes
+      }
+      stroke(255);
+    }
+    //  line(v[0].x, v[0].y, v[lastTrueSpoke].x, v[lastTrueSpoke].y);
+  }
+}
+
+
+
+PVector lineIntersection(PVector p1, PVector p2, PVector p3, PVector p4) {
+  PVector b = PVector.sub(p2, p1);
+  PVector d = PVector.sub(p4, p3);
+
+  float b_dot_d_perp = b.x * d.y - b.y * d.x;
+  if (b_dot_d_perp == 0) { 
+    println("1st overlap error");
+    return null;
+  }
+  PVector c = PVector.sub(p3, p1);
+  float t = (c.x * d.y - c.y * d.x) / b_dot_d_perp;
+  if (t < 0 || t > 1) { 
+    println("2nd overlap error");
+    return null;
+  }
+  float u = (c.x * b.y - c.y * b.x) / b_dot_d_perp;
+  if (u < 0 || u > 1) { 
+    println(u + "<-u 3rd overlap error");
+    return null;
+  }
+  return new PVector(p1.x+t*b.x, p1.y+t*b.y);
+}
