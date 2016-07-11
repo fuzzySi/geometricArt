@@ -1,2 +1,2 @@
 # geometricArt
-tiled geometry - I love Islamic geometric art
+tiled geometry - influenced by Islamic geometric art
