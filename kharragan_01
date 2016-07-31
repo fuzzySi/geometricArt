@@ -1,0 +1,108 @@
+// hexagonal overlapping pattern
+// tombs at Kharragan, Iraq 492 / 1067AD
+// found in Geometric Concepts in Islamic Art
+
+float initAngle = TWO_PI / 12;
+float POINTS = 6.0; // maths easier with floats
+float radius = 25.0;
+float eachArc = TWO_PI / POINTS;
+PVector start, nextVertex, nextCentre, nextCentrePV;
+
+void setup() {
+  size(600, 600);
+
+  background(0);
+  nextVertex = new PVector(0, 0);
+  start = new PVector(width, 0.0);
+  nextCentre = new PVector();
+  nextCentre = start;
+  nextCentrePV = new PVector(5 * radius, 0);
+  nextCentrePV.add((cos(1 * eachArc) * 5 * radius), (sin(1 * eachArc) * 5 * radius));
+  //nextCentrePV = new PVector(2.77 * radius, 1.17 * radius);
+  println(nextCentrePV);
+}
+
+void draw() {
+  fill(255);
+  stroke(50);
+  pushMatrix();
+
+
+  pushMatrix();
+//    rotate(TWO_PI - initAngle);
+  repeat(6);
+  popMatrix();
+  
+  translate( 108,187); 
+//  translate(0, 217);
+  pushMatrix();
+
+  repeat(6);
+  popMatrix();
+ 
+  translate( 108,187); 
+//  translate(0, -375);
+  pushMatrix();
+  repeat(6);
+  popMatrix();
+  
+  translate( 108,187); 
+  pushMatrix();
+  repeat(6);
+  popMatrix();
+
+  noLoop();
+}
+
+void repeat(int n) {
+    rotate(TWO_PI - initAngle);
+  for (int j = 0; j < n; j ++ ) {
+    kharragan(radius);
+    translate(nextCentrePV.x, nextCentrePV.y);
+    //    println(nextCentrePV.x, nextCentrePV.y);
+  }
+}
+
+void kharragan(float r) {
+  for (int n = 0; n < POINTS; n ++ ) {
+    float theta = n * eachArc; // current angle
+    println(theta);
+    nextVertex.x = cos(theta) * r;
+    nextVertex.y = sin(theta) * r;
+    beginShape();
+    vertex(nextVertex.x, nextVertex.y);
+    println(nextVertex.x, nextVertex.y);
+    nextVertex.add(cos(theta + eachArc) * r, sin(theta + eachArc) * r);
+    vertex(nextVertex.x, nextVertex.y);
+    println(nextVertex.x, nextVertex.y);
+    nextVertex.add(cos(theta) * r, sin(theta) * r); // straight on
+    vertex(nextVertex.x, nextVertex.y); // top right
+    println(nextVertex.x, nextVertex.y);
+    nextVertex.add(cos(theta + (4 * eachArc)) * r, sin(theta + (4 * eachArc)) * r);
+    vertex(nextVertex.x, nextVertex.y); // mid angle
+    println(nextVertex.x, nextVertex.y);
+    nextVertex.add(cos(theta + (5 * eachArc)) * 3 * r, sin(theta + (5 * eachArc)) * 3 * r);
+    vertex(nextVertex.x, nextVertex.y); // L inner angle
+    nextVertex.add(cos(theta) * r, sin(theta) * r); // straight on
+    vertex(nextVertex.x, nextVertex.y); // L inner top
+    nextVertex.add(cos(theta + (5 * eachArc)) * r, sin(theta + (5 * eachArc)) * r);
+    vertex(nextVertex.x, nextVertex.y); // L outer top
+    nextVertex.add(cos(theta + (3 * eachArc)) * 2 * r, sin(theta + (3 * eachArc)) * 2 * r);
+    vertex(nextVertex.x, nextVertex.y); // L lower
+    nextVertex.add(cos(theta + (2 * eachArc)) * 4 * r, sin(theta + (2 * eachArc)) * 4 * r);
+    vertex(nextVertex.x, nextVertex.y); // end
+    endShape(CLOSE);
+
+    //  vertex(cos(theta + eachArc) * r, sin(theta + eachArc) * r);
+    // vertex(cos(theta) * r, sin(theta) * r);
+    // vertex(cos(theta + (4 * eachArc)) * r, sin(theta + (4 * eachArc)) * r);
+    //  endShape(CLOSE);
+  }
+}
+
+/*
+void nextDot(float arcs, float radiusMults) {
+ nextVertex.add(cos(theta + (arcs * eachArc)) * radiusMults * r, sin(theta + (arcs * eachArc)) * radiusMults * r);
+ vertex(nextVertex.x, nextVertex.y); // mid angle
+ }
+ */
